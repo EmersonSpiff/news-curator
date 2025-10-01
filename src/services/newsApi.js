@@ -182,29 +182,17 @@ export class NewsApiService {
 
   // Fetch all articles from multiple sources
   async fetchAllArticles() {
-    const searchQueries = [
-      // Broader searches to catch more articles
-      'cybersecurity',
-      'quantum computing',
-      'quantum technology', 
-      'Maryland',
-      'Baltimore',
-      'Annapolis',
-      'steve hershey',
-      'gubernatorial',
-      'governor maryland'
-    ];
-
+    // Use ANY of these terms in a single efficient query
+    const combinedQuery = 'cybersecurity OR "quantum computing" OR "quantum technology" OR Maryland OR Baltimore OR Annapolis OR "steve hershey" OR gubernatorial OR "governor maryland"';
+    
     const allArticles = [];
     
-    // Fetch articles for each query
-    for (const query of searchQueries) {
-      try {
-        const articles = await this.fetchFromNewsApi(query);
-        allArticles.push(...articles);
-      } catch (error) {
-        console.error(`Search query error for "${query}":`, error);
-      }
+    try {
+      // Single API call using OR logic (much more efficient)
+      const articles = await this.fetchFromNewsApi(combinedQuery);
+      allArticles.push(...articles);
+    } catch (error) {
+      console.error('Combined search query error:', error);
     }
 
     // Also try the RSS-style Maryland-specific searches
