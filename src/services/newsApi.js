@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-// News API configuration
+// News API configuration - using our server proxy to avoid CORS issues
 const NEWS_API_KEY = process.env.REACT_APP_NEWS_API_KEY || 'demo-key';
-const NEWS_API_BASE = 'https://newsapi.org/v2';
+const NEWS_API_BASE = '/api'; // Our server proxy endpoint
 
 // RSS Feeds for Maryland sources
 export const RSS_FEEDS = {
@@ -56,7 +56,7 @@ export class NewsApiService {
       }
 
       console.log('NewsAPI request params:', params);
-      const response = await axios.get(`${NEWS_API_BASE}/everything`, { params });
+      const response = await axios.get(`${NEWS_API_BASE}/news`, { params });
       console.log('NewsAPI response status:', response.data.status);
       console.log('NewsAPI response totalResults:', response.data.totalResults);
       
