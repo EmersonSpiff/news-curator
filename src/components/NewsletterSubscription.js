@@ -178,3 +178,4 @@ const NewsletterSubscription = ({ onSubscribe }) => {
 };
 
 export default NewsletterSubscription;
+

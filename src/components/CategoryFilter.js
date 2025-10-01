@@ -32,3 +32,4 @@ const CategoryFilter = ({ selectedCategory, setSelectedCategory }) => {
 };
 
 export default CategoryFilter;
+

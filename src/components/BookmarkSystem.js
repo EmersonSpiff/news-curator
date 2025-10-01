@@ -120,3 +120,4 @@ const BookmarkSystem = ({ articles, onBookmarkChange }) => {
 };
 
 export default BookmarkSystem;
+

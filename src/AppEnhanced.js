@@ -25,10 +25,10 @@ function AppEnhanced() {
   const [sortBy, setSortBy] = useState('date-desc');
 
   // Data and loading states
-  const [articles, setArticles] = useState(sampleArticles);
-  const [isLoading, setIsLoading] = useState(false);
+  const [articles, setArticles] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
-  const [useLiveData, setUseLiveData] = useState(false);
+  const [useLiveData, setUseLiveData] = useState(true);
 
   // Bookmark system
   const [bookmarkedArticles, setBookmarkedArticles] = useState([]);
@@ -66,10 +66,17 @@ function AppEnhanced() {
       setLastUpdate(new Date());
     } catch (error) {
       console.error('Failed to fetch live data:', error);
+      // Fallback to sample data if API fails
+      setArticles(sampleArticles);
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Load initial data
+  useEffect(() => {
+    fetchLiveData();
+  }, []);
 
   // Filter and sort articles
   const filteredArticles = useMemo(() => {
@@ -174,13 +181,11 @@ function AppEnhanced() {
   // Auto-refresh data every hour
   useEffect(() => {
     const interval = setInterval(() => {
-      if (useLiveData) {
-        fetchLiveData();
-      }
+      fetchLiveData();
     }, 60 * 60 * 1000); // 1 hour
 
     return () => clearInterval(interval);
-  }, [useLiveData]);
+  }, []);
 
   return (
     <div className="App">
@@ -210,24 +215,15 @@ function AppEnhanced() {
             onBookmarkChange={setBookmarkedArticles}
           />
 
-          {/* Data Source Toggle */}
+          {/* Data Source Controls */}
           <div className="data-source-toggle">
             <button 
-              className={`toggle-btn ${useLiveData ? 'active' : ''}`}
-              onClick={() => setUseLiveData(!useLiveData)}
+              className="refresh-btn"
+              onClick={fetchLiveData}
+              disabled={isLoading}
             >
-              {useLiveData ? '🔄' : '📰'} 
-              {useLiveData ? 'Live Data' : 'Sample Data'}
+              {isLoading ? '⏳' : '🔄'} Refresh News
             </button>
-            {useLiveData && (
-              <button 
-                className="refresh-btn"
-                onClick={fetchLiveData}
-                disabled={isLoading}
-              >
-                {isLoading ? '⏳' : '🔄'} Refresh
-              </button>
-            )}
             <button 
               className="newsletter-btn"
               onClick={() => setShowNewsletter(!showNewsletter)}
@@ -270,7 +266,7 @@ function AppEnhanced() {
               {filteredArticles.length} article{filteredArticles.length !== 1 ? 's' : ''} found
               {selectedCategory !== 'all' && ` in ${selectedCategory.replace('-', ' ')}`}
               {selectedSources.length > 0 && ` from ${selectedSources.length} source${selectedSources.length !== 1 ? 's' : ''}`}
-              {useLiveData && ` (Live data, last updated: ${format(lastUpdate, 'MMM dd, h:mm a')})`}
+              {` (Live data, last updated: ${format(lastUpdate, 'MMM dd, h:mm a')})`}
             </h2>
           </div>
 
