@@ -55,15 +55,20 @@ export class NewsApiService {
         params.sources = sources;
       }
 
+      console.log('NewsAPI request params:', params);
       const response = await axios.get(`${NEWS_API_BASE}/everything`, { params });
+      console.log('NewsAPI response status:', response.data.status);
+      console.log('NewsAPI response totalResults:', response.data.totalResults);
       
       if (response.data.status === 'ok') {
-        return this.transformNewsApiArticles(response.data.articles);
+        const articles = this.transformNewsApiArticles(response.data.articles);
+        console.log(`Transformed ${articles.length} articles for query: ${query}`);
+        return articles;
       }
       
       throw new Error(response.data.message || 'News API request failed');
     } catch (error) {
-      console.error('News API Error:', error);
+      console.error('News API Error for query "' + query + '":', error.response?.data || error.message);
       return [];
     }
   }
@@ -182,25 +187,32 @@ export class NewsApiService {
 
   // Fetch all articles from multiple sources
   async fetchAllArticles() {
-    // Use ANY of these terms in a single efficient query
-    const combinedQuery = 'cybersecurity OR "quantum computing" OR "quantum technology" OR Maryland OR Baltimore OR Annapolis OR "steve hershey" OR gubernatorial OR "governor maryland"';
-    
     const allArticles = [];
     
-    try {
-      // Single API call using OR logic (much more efficient)
-      const articles = await this.fetchFromNewsApi(combinedQuery);
-      allArticles.push(...articles);
-    } catch (error) {
-      console.error('Combined search query error:', error);
+    // Try multiple specific searches (NewsAPI free tier doesn't support OR operators)
+    const searchQueries = [
+      'cybersecurity',
+      'quantum',
+      'Maryland',
+      'Baltimore',
+      'Steve Hershey'
+    ];
+    
+    // Fetch articles for each query
+    for (const query of searchQueries) {
+      try {
+        console.log(`Searching for: ${query}`);
+        const articles = await this.fetchFromNewsApi(query);
+        console.log(`Found ${articles.length} articles for "${query}"`);
+        allArticles.push(...articles);
+      } catch (error) {
+        console.error(`Search query error for "${query}":`, error);
+      }
     }
-
-    // Also try the RSS-style Maryland-specific searches
-    const rssArticles = await this.fetchFromRSS();
-    allArticles.push(...rssArticles);
 
     // Combine and deduplicate articles
     const uniqueArticles = this.deduplicateArticles(allArticles);
+    console.log(`Total unique articles found: ${uniqueArticles.length}`);
 
     return uniqueArticles.sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate));
   }
