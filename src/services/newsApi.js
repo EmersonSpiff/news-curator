@@ -1,5 +1,4 @@
 import axios from 'axios';
-import Parser from 'rss-parser';
 
 // News API configuration
 const NEWS_API_KEY = process.env.REACT_APP_NEWS_API_KEY || 'demo-key';
@@ -38,7 +37,7 @@ export const STEVE_HERSHEY_KEYWORDS = [
 // News API service
 export class NewsApiService {
   constructor() {
-    this.parser = new Parser();
+    // Browser-compatible RSS parsing will be handled via NewsAPI
   }
 
   // Fetch articles from News API
@@ -87,32 +86,32 @@ export class NewsApiService {
     }));
   }
 
-  // Fetch articles from RSS feeds
+  // Fetch articles from RSS feeds (browser-compatible version)
   async fetchFromRSS() {
     const allArticles = [];
 
-    for (const [sourceName, feedUrl] of Object.entries(RSS_FEEDS)) {
-      try {
-        const feed = await this.parser.parseURL(feedUrl);
-        
-        const articles = feed.items.map(item => ({
-          id: `rss-${item.guid || item.link?.split('/').pop() || Math.random().toString(36).substr(2, 9)}`,
-          title: item.title,
-          summary: item.contentSnippet || item.content || '',
-          source: sourceName,
-          author: item.creator || 'Unknown',
-          publishDate: item.pubDate || new Date().toISOString(),
-          url: item.link,
-          imageUrl: item.enclosure?.url || null,
-          category: this.categorizeArticle(item.title + ' ' + (item.contentSnippet || '')),
-          tags: this.extractTags(item.title + ' ' + (item.contentSnippet || '')),
-          updateTime: this.getUpdateTime(),
-          apiSource: 'RSS'
-        }));
+    // For browser compatibility, we'll use NewsAPI with Maryland-specific queries
+    // instead of direct RSS parsing which requires Node.js polyfills
+    const marylandQueries = [
+      'Maryland cybersecurity',
+      'Maryland quantum',
+      'Baltimore cybersecurity',
+      'Annapolis news',
+      'Maryland gubernatorial',
+      'Steve Hershey',
+      'Maryland Matters'
+    ];
 
-        allArticles.push(...articles);
+    for (const query of marylandQueries) {
+      try {
+        const articles = await this.fetchFromNewsApi(query, '', 'en', 'publishedAt');
+        const marylandArticles = articles.map(article => ({
+          ...article,
+          apiSource: 'NewsAPI-Maryland'
+        }));
+        allArticles.push(...marylandArticles);
       } catch (error) {
-        console.error(`RSS Feed Error for ${sourceName}:`, error);
+        console.error(`Maryland News Query Error for "${query}":`, error);
       }
     }
 
