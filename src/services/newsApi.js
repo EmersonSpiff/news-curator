@@ -93,13 +93,17 @@ export class NewsApiService {
     // For browser compatibility, we'll use NewsAPI with Maryland-specific queries
     // instead of direct RSS parsing which requires Node.js polyfills
     const marylandQueries = [
+      // More specific Maryland searches
       'Maryland cybersecurity',
       'Maryland quantum',
       'Baltimore cybersecurity',
       'Annapolis news',
       'Maryland gubernatorial',
       'Steve Hershey',
-      'Maryland Matters'
+      'Maryland Matters',
+      'Baltimore Sun',
+      'Maryland politics',
+      'Eastern Shore'
     ];
 
     for (const query of marylandQueries) {
@@ -178,13 +182,36 @@ export class NewsApiService {
 
   // Fetch all articles from multiple sources
   async fetchAllArticles() {
-    const [newsApiArticles, rssArticles] = await Promise.all([
-      this.fetchFromNewsApi('cybersecurity OR quantum OR "steve hershey" OR maryland'),
-      this.fetchFromRSS()
-    ]);
+    const searchQueries = [
+      // Broader searches to catch more articles
+      'cybersecurity',
+      'quantum computing',
+      'quantum technology', 
+      'Maryland',
+      'Baltimore',
+      'Annapolis',
+      'steve hershey',
+      'gubernatorial',
+      'governor maryland'
+    ];
+
+    const allArticles = [];
+    
+    // Fetch articles for each query
+    for (const query of searchQueries) {
+      try {
+        const articles = await this.fetchFromNewsApi(query);
+        allArticles.push(...articles);
+      } catch (error) {
+        console.error(`Search query error for "${query}":`, error);
+      }
+    }
+
+    // Also try the RSS-style Maryland-specific searches
+    const rssArticles = await this.fetchFromRSS();
+    allArticles.push(...rssArticles);
 
     // Combine and deduplicate articles
-    const allArticles = [...newsApiArticles, ...rssArticles];
     const uniqueArticles = this.deduplicateArticles(allArticles);
 
     return uniqueArticles.sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate));
